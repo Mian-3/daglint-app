@@ -4,6 +4,7 @@ import { useEffect, useState } from "react";
 import Link from "next/link";
 import { useSession } from "next-auth/react";
 import { Trash2, Minus, Plus } from "lucide-react";
+import { calculateShipping, getAmountLeftForFreeShipping } from "@/lib/orderCalculations";
 
 export default function CartPage() {
   const { data: session, status } = useSession();
@@ -162,13 +163,36 @@ export default function CartPage() {
 
         <div className="border border-cream-200 rounded-lg p-6 h-fit">
           <h2 className="font-semibold mb-4">Order Summary</h2>
+
           <div className="flex justify-between text-sm mb-2">
             <span className="text-ink-600">Subtotal</span>
             <span className="font-medium">Rs. {cart.subtotal.toLocaleString()}</span>
           </div>
-          <p className="text-xs text-ink-600 mb-4">
-            Shipping and taxes calculated at checkout.
-          </p>
+
+          <div className="flex justify-between text-sm mb-2">
+            <span className="text-ink-600">Shipping</span>
+            {calculateShipping(cart.subtotal) === 0 ? (
+              <span className="font-medium text-green-600">Free</span>
+            ) : (
+              <span className="font-medium">
+                Rs. {calculateShipping(cart.subtotal).toLocaleString()}
+              </span>
+            )}
+          </div>
+
+          {calculateShipping(cart.subtotal) > 0 && (
+            <p className="text-xs text-ink-600 bg-cream-100 rounded-md px-3 py-2 mb-4">
+              Add Rs. {getAmountLeftForFreeShipping(cart.subtotal).toLocaleString()} more to get free shipping!
+            </p>
+          )}
+
+          <div className="flex justify-between text-sm font-semibold border-t border-cream-200 pt-3 mb-4">
+            <span>Total</span>
+            <span>
+              Rs. {(cart.subtotal + calculateShipping(cart.subtotal)).toLocaleString()}
+            </span>
+          </div>
+
           <Link
             href="/checkout"
             className="block w-full text-center bg-ink-900 text-white py-3 rounded-md text-sm font-medium hover:bg-black transition-colors"
