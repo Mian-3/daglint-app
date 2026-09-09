@@ -11,7 +11,7 @@ export const metadata = {
 export default function RootLayout({ children }) {
   return (
     <html lang="en">
-      <body className="min-h-screen flex flex-col">
+      <body className="min-h-screen flex flex-col font-sans bg-cream-50 text-ink-900 antialiased">
         <SessionProviderWrapper>
           <Navbar />
           <main className="flex-1">{children}</main>
@@ -20,4 +20,4 @@ export default function RootLayout({ children }) {
       </body>
     </html>
   );
-}
+} 

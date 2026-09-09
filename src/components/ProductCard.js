@@ -14,9 +14,9 @@ export default function ProductCard({ product }) {
   const outOfStock = product.stock <= 0;
 
   return (
-    <div className="group relative border border-gray-200 rounded-lg overflow-hidden bg-white hover:shadow-md transition-shadow">
+    <div className="group relative border border-cream-200 rounded-lg overflow-hidden bg-white hover:shadow-md transition-shadow">
       <Link href={`/products/${product.slug}`}>
-        <div className="relative aspect-square bg-gray-100 overflow-hidden">
+        <div className="relative aspect-square bg-cream-100 overflow-hidden">
           <img
             src={image}
             alt={product.name}
@@ -24,14 +24,14 @@ export default function ProductCard({ product }) {
           />
 
           {hasDiscount && (
-            <span className="absolute top-2 left-2 bg-black text-white text-xs font-semibold px-2 py-1 rounded">
+            <span className="absolute top-2 left-2 bg-red-600 text-white text-xs font-semibold px-2 py-1 rounded">
               -{discountPercent}%
             </span>
           )}
 
           {outOfStock && (
             <div className="absolute inset-0 bg-white/70 flex items-center justify-center">
-              <span className="text-sm font-semibold text-gray-800 bg-white px-3 py-1 rounded-full border border-gray-300">
+              <span className="text-sm font-semibold text-ink-900 bg-white px-3 py-1 rounded-full border border-cream-200">
                 Out of Stock
               </span>
             </div>
@@ -40,30 +40,30 @@ export default function ProductCard({ product }) {
           <button
             type="button"
             title="Add to wishlist"
-            className="absolute top-2 right-2 bg-white rounded-full p-2 shadow hover:bg-gray-50"
+            className="absolute top-2 right-2 bg-white rounded-full p-2 shadow hover:bg-cream-50"
             onClick={(e) => {
               e.preventDefault();
               // Wishlist functionality will be added in a later stage
             }}
           >
-            <Heart className="w-4 h-4" />
+            <Heart className="w-4 h-4 text-ink-900" />
           </button>
         </div>
       </Link>
 
       <div className="p-4">
         <Link href={`/products/${product.slug}`}>
-          <h3 className="text-sm font-medium text-gray-900 truncate">
+          <h3 className="text-sm font-medium text-ink-900 truncate">
             {product.name}
           </h3>
         </Link>
 
         <div className="flex items-center gap-2 mt-1">
-          <span className="text-sm font-semibold text-gray-900">
+          <span className="text-sm font-semibold text-ink-900">
             Rs. {price.toLocaleString()}
           </span>
           {hasDiscount && (
-            <span className="text-xs text-gray-400 line-through">
+            <span className="text-xs text-ink-600 line-through">
               Rs. {compareAtPrice.toLocaleString()}
             </span>
           )}
@@ -72,7 +72,7 @@ export default function ProductCard({ product }) {
         <button
           type="button"
           disabled={outOfStock}
-          className="mt-3 w-full flex items-center justify-center gap-2 bg-black text-white text-xs font-medium py-2 rounded-md hover:bg-gray-800 disabled:bg-gray-300 disabled:cursor-not-allowed"
+          className="mt-3 w-full flex items-center justify-center gap-2 bg-ink-900 text-white text-xs font-medium py-2 rounded-md hover:bg-black transition-colors disabled:bg-cream-200 disabled:text-ink-600 disabled:cursor-not-allowed"
         >
           <ShoppingCart className="w-3.5 h-3.5" />
           {outOfStock ? "Out of Stock" : "Add to Cart"}
