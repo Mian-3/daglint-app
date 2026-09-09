@@ -3,9 +3,11 @@
 import { useState } from "react";
 import { Minus, Plus, Heart, ShoppingCart } from "lucide-react";
 import { useRouter } from "next/navigation";
+import { useCart } from "@/context/CartContext";
 
 export default function ProductActions({ product }) {
   const router = useRouter();
+  const { refreshCart, openDrawer } = useCart();
   const [quantity, setQuantity] = useState(1);
   const [loading, setLoading] = useState(false);
   const [wishlistLoading, setWishlistLoading] = useState(false);
@@ -41,7 +43,8 @@ export default function ProductActions({ product }) {
       }
 
       setMessage("Added to cart!");
-      router.refresh();
+      refreshCart();
+      openDrawer();
     } catch (err) {
       setMessage("Something went wrong.");
     } finally {

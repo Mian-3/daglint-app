@@ -4,9 +4,11 @@ import Link from "next/link";
 import Logo from "./Logo";
 import { ShoppingCart, Search, User, LogOut } from "lucide-react";
 import { useSession, signOut } from "next-auth/react";
+import { useCart } from "@/context/CartContext";
 
 export default function Navbar() {
   const { data: session, status } = useSession();
+  const { itemCount, openDrawer } = useCart();
 
   return (
     <header className="w-full border-b border-cream-200 bg-white sticky top-0 z-50">
@@ -37,8 +39,9 @@ export default function Navbar() {
           {status === "authenticated" ? (
             <div className="flex items-center gap-3">
               <Link
-                href="/account"
+                href="/account/orders"
                 className="flex items-center gap-1 text-sm hover:text-black transition-colors"
+                title="My Orders"
               >
                 <User className="w-5 h-5" />
                 <span className="hidden md:inline">{session.user.name}</span>
@@ -61,9 +64,18 @@ export default function Navbar() {
             </Link>
           )}
 
-          <Link href="/cart" className="hover:text-black transition-colors">
+          <button
+            type="button"
+            onClick={openDrawer}
+            className="relative hover:text-black transition-colors"
+          >
             <ShoppingCart className="w-5 h-5" />
-          </Link>
+            {itemCount > 0 && (
+              <span className="absolute -top-2 -right-2 bg-red-600 text-white text-[10px] font-semibold w-4.5 h-4.5 min-w-[18px] min-h-[18px] rounded-full flex items-center justify-center px-1">
+                {itemCount}
+              </span>
+            )}
+          </button>
         </div>
       </div>
     </header>
