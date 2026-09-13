@@ -72,7 +72,7 @@ export default function ProductCard({ product }) {
   }
 
   return (
-    <div className="group relative border border-cream-200 rounded-lg overflow-hidden bg-white hover:shadow-md transition-shadow">
+    <div className="group relative border border-cream-200 overflow-hidden bg-white hover:shadow-md transition-shadow">
       <Link href={`/products/${product.slug}`}>
         <div className="relative aspect-square bg-cream-100 overflow-hidden">
           <img
@@ -82,14 +82,14 @@ export default function ProductCard({ product }) {
           />
 
           {hasDiscount && (
-            <span className="absolute top-2 left-2 bg-red-600 text-white text-xs font-semibold px-2 py-1 rounded">
+            <span className="absolute top-2 left-2 bg-red-600 text-white text-xs font-semibold px-2 py-1">
               -{discountPercent}%
             </span>
           )}
 
           {outOfStock && (
             <div className="absolute inset-0 bg-white/70 flex items-center justify-center">
-              <span className="text-sm font-semibold text-ink-900 bg-white px-3 py-1 rounded-full border border-cream-200">
+              <span className="text-sm font-semibold text-ink-900 bg-white px-3 py-1 border border-cream-200">
                 Out of Stock
               </span>
             </div>
@@ -100,7 +100,7 @@ export default function ProductCard({ product }) {
             title="Add to wishlist"
             disabled={addingToWishlist}
             onClick={handleAddToWishlist}
-            className="absolute top-2 right-2 bg-white rounded-full p-2 shadow hover:bg-cream-50 cursor-pointer disabled:opacity-50"
+            className="absolute top-2 right-2 bg-white p-2 shadow hover:bg-cream-50 cursor-pointer disabled:opacity-50"
           >
             <Heart className="w-4 h-4 text-ink-900" />
           </button>
@@ -129,7 +129,7 @@ export default function ProductCard({ product }) {
           type="button"
           disabled={outOfStock || addingToCart}
           onClick={handleAddToCart}
-          className="mt-3 w-full flex items-center justify-center gap-2 bg-ink-900 text-white text-xs font-medium py-2 rounded-md hover:bg-black transition-colors cursor-pointer disabled:bg-cream-200 disabled:text-ink-600 disabled:cursor-not-allowed"
+          className="mt-3 w-full flex items-center justify-center gap-2 bg-ink-900 text-white text-xs font-medium py-2 hover:bg-black transition-colors cursor-pointer disabled:bg-cream-200 disabled:text-ink-600 disabled:cursor-not-allowed"
         >
           <ShoppingCart className="w-3.5 h-3.5" />
           {outOfStock ? "Out of Stock" : addingToCart ? "Adding..." : "Add to Cart"}
