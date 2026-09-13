@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { Minus, Plus, Heart, ShoppingCart } from "lucide-react";
+import { Minus, Plus, Heart, ShoppingCart, Zap } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useCart } from "@/context/CartContext";
 
@@ -10,6 +10,7 @@ export default function ProductActions({ product }) {
   const { refreshCart, openDrawer } = useCart();
   const [quantity, setQuantity] = useState(1);
   const [loading, setLoading] = useState(false);
+  const [buyingNow, setBuyingNow] = useState(false);
   const [wishlistLoading, setWishlistLoading] = useState(false);
   const [message, setMessage] = useState("");
 
@@ -23,32 +24,43 @@ export default function ProductActions({ product }) {
     setQuantity((q) => Math.min(product.stock, q + 1));
   }
 
+  async function addToCart(qty) {
+    const res = await fetch("/api/cart", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ productId: product.id, quantity: qty }),
+    });
+    const data = await res.json();
+    if (!res.ok) {
+      throw new Error(data.error || "Could not add to cart.");
+    }
+  }
+
   async function handleAddToCart() {
     setLoading(true);
     setMessage("");
-
     try {
-      const res = await fetch("/api/cart", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ productId: product.id, quantity }),
-      });
-
-      const data = await res.json();
-
-      if (!res.ok) {
-        setMessage(data.error || "Could not add to cart.");
-        setLoading(false);
-        return;
-      }
-
+      await addToCart(quantity);
       setMessage("Added to cart!");
       refreshCart();
       openDrawer();
     } catch (err) {
-      setMessage("Something went wrong.");
+      setMessage(err.message);
     } finally {
       setLoading(false);
+    }
+  }
+
+  async function handleBuyNow() {
+    setBuyingNow(true);
+    setMessage("");
+    try {
+      await addToCart(quantity);
+      await refreshCart();
+      router.push("/checkout");
+    } catch (err) {
+      setMessage(err.message);
+      setBuyingNow(false);
     }
   }
 
@@ -64,6 +76,11 @@ export default function ProductActions({ product }) {
       });
 
       const data = await res.json();
+
+      if (res.status === 401) {
+        router.push("/login");
+        return;
+      }
 
       if (!res.ok) {
         setMessage(data.error || "Could not add to wishlist.");
@@ -83,11 +100,11 @@ export default function ProductActions({ product }) {
     <div>
       <div className="flex items-center gap-4 mb-4">
         <span className="text-sm font-medium">Quantity</span>
-        <div className="flex items-center border border-gray-300 rounded-md">
+        <div className="flex items-center border border-cream-200 rounded-md">
           <button
             type="button"
             onClick={decrease}
-            className="p-2 hover:bg-gray-50"
+            className="p-2 hover:bg-cream-50 cursor-pointer"
             disabled={outOfStock}
           >
             <Minus className="w-3.5 h-3.5" />
@@ -96,7 +113,7 @@ export default function ProductActions({ product }) {
           <button
             type="button"
             onClick={increase}
-            className="p-2 hover:bg-gray-50"
+            className="p-2 hover:bg-cream-50 cursor-pointer"
             disabled={outOfStock}
           >
             <Plus className="w-3.5 h-3.5" />
@@ -108,11 +125,11 @@ export default function ProductActions({ product }) {
         <button
           type="button"
           onClick={handleAddToCart}
-          disabled={outOfStock || loading}
-          className="flex-1 flex items-center justify-center gap-2 bg-black text-white py-3 rounded-md text-sm font-medium hover:bg-gray-800 disabled:bg-gray-300 disabled:cursor-not-allowed"
+          disabled={outOfStock || loading || buyingNow}
+          className="flex-1 flex items-center justify-center gap-2 border-2 border-ink-900 text-ink-900 py-3 rounded-md text-sm font-medium hover:bg-cream-50 disabled:opacity-40 disabled:cursor-not-allowed cursor-pointer transition-colors"
         >
           <ShoppingCart className="w-4 h-4" />
-          {loading ? "Adding..." : outOfStock ? "Out of Stock" : "Add to Cart"}
+          {loading ? "Adding..." : "Add to Cart"}
         </button>
 
         <button
@@ -120,14 +137,24 @@ export default function ProductActions({ product }) {
           onClick={handleAddToWishlist}
           disabled={wishlistLoading}
           title="Add to wishlist"
-          className="p-3 border border-gray-300 rounded-md hover:bg-gray-50"
+          className="p-3 border border-cream-200 rounded-md hover:bg-cream-50 cursor-pointer"
         >
           <Heart className="w-4 h-4" />
         </button>
       </div>
 
+      <button
+        type="button"
+        onClick={handleBuyNow}
+        disabled={outOfStock || loading || buyingNow}
+        className="mt-3 w-full flex items-center justify-center gap-2 bg-ink-900 text-white py-3 rounded-md text-sm font-medium hover:bg-black disabled:opacity-40 disabled:cursor-not-allowed cursor-pointer transition-colors"
+      >
+        <Zap className="w-4 h-4" />
+        {buyingNow ? "Processing..." : outOfStock ? "Out of Stock" : "Buy Now"}
+      </button>
+
       {message && (
-        <p className="text-sm text-gray-600 mt-3">{message}</p>
+        <p className="text-sm text-ink-600 mt-3">{message}</p>
       )}
     </div>
   );

@@ -1,9 +1,17 @@
 "use client";
 
+import { useState } from "react";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import { Heart, ShoppingCart } from "lucide-react";
+import { useCart } from "@/context/CartContext";
 
 export default function ProductCard({ product }) {
+  const router = useRouter();
+  const { refreshCart, openDrawer } = useCart();
+  const [addingToCart, setAddingToCart] = useState(false);
+  const [addingToWishlist, setAddingToWishlist] = useState(false);
+
   const image = product.images?.[0]?.url || "https://picsum.photos/seed/placeholder/800/800";
   const price = Number(product.price);
   const compareAtPrice = product.compareAtPrice ? Number(product.compareAtPrice) : null;
@@ -12,6 +20,56 @@ export default function ProductCard({ product }) {
     ? Math.round(((compareAtPrice - price) / compareAtPrice) * 100)
     : null;
   const outOfStock = product.stock <= 0;
+
+  async function handleAddToCart(e) {
+    e.preventDefault();
+    if (outOfStock || addingToCart) return;
+
+    setAddingToCart(true);
+    try {
+      const res = await fetch("/api/cart", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ productId: product.id, quantity: 1 }),
+      });
+
+      if (res.status === 401) {
+        router.push("/login");
+        return;
+      }
+
+      if (res.ok) {
+        refreshCart();
+        openDrawer();
+      }
+    } catch (err) {
+      console.error("Add to cart failed:", err);
+    } finally {
+      setAddingToCart(false);
+    }
+  }
+
+  async function handleAddToWishlist(e) {
+    e.preventDefault();
+    if (addingToWishlist) return;
+
+    setAddingToWishlist(true);
+    try {
+      const res = await fetch("/api/wishlist", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ productId: product.id }),
+      });
+
+      if (res.status === 401) {
+        router.push("/login");
+      }
+    } catch (err) {
+      console.error("Add to wishlist failed:", err);
+    } finally {
+      setAddingToWishlist(false);
+    }
+  }
 
   return (
     <div className="group relative border border-cream-200 rounded-lg overflow-hidden bg-white hover:shadow-md transition-shadow">
@@ -40,11 +98,9 @@ export default function ProductCard({ product }) {
           <button
             type="button"
             title="Add to wishlist"
-            className="absolute top-2 right-2 bg-white rounded-full p-2 shadow hover:bg-cream-50"
-            onClick={(e) => {
-              e.preventDefault();
-              // Wishlist functionality will be added in a later stage
-            }}
+            disabled={addingToWishlist}
+            onClick={handleAddToWishlist}
+            className="absolute top-2 right-2 bg-white rounded-full p-2 shadow hover:bg-cream-50 cursor-pointer disabled:opacity-50"
           >
             <Heart className="w-4 h-4 text-ink-900" />
           </button>
@@ -71,11 +127,12 @@ export default function ProductCard({ product }) {
 
         <button
           type="button"
-          disabled={outOfStock}
-          className="mt-3 w-full flex items-center justify-center gap-2 bg-ink-900 text-white text-xs font-medium py-2 rounded-md hover:bg-black transition-colors disabled:bg-cream-200 disabled:text-ink-600 disabled:cursor-not-allowed"
+          disabled={outOfStock || addingToCart}
+          onClick={handleAddToCart}
+          className="mt-3 w-full flex items-center justify-center gap-2 bg-ink-900 text-white text-xs font-medium py-2 rounded-md hover:bg-black transition-colors cursor-pointer disabled:bg-cream-200 disabled:text-ink-600 disabled:cursor-not-allowed"
         >
           <ShoppingCart className="w-3.5 h-3.5" />
-          {outOfStock ? "Out of Stock" : "Add to Cart"}
+          {outOfStock ? "Out of Stock" : addingToCart ? "Adding..." : "Add to Cart"}
         </button>
       </div>
     </div>

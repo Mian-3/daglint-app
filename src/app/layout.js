@@ -4,6 +4,7 @@ import Footer from "@/components/Footer";
 import SessionProviderWrapper from "@/components/SessionProviderWrapper";
 import { CartProvider } from "@/context/CartContext";
 import CartDrawer from "@/components/CartDrawer";
+import AnnouncementBar from "@/components/AnnouncementBar";
 
 export const metadata = {
   title: "Daglint — Premium Store",
@@ -15,8 +16,9 @@ export default function RootLayout({ children }) {
     <html lang="en">
       <body className="min-h-screen flex flex-col font-sans bg-cream-50 text-ink-900 antialiased">
         <SessionProviderWrapper>
-          <CartProvider>
-            <Navbar />
+  <CartProvider>
+    <AnnouncementBar />
+    <Navbar />
             <main className="flex-1">{children}</main>
             <Footer />
             <CartDrawer />

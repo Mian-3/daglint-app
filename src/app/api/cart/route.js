@@ -1,27 +1,42 @@
 import { NextResponse } from "next/server";
 import { auth } from "@/auth";
 import { prisma } from "@/lib/prisma";
+import { randomUUID } from "crypto";
 
-// Get the current user's cart
-export async function GET() {
-  const session = await auth();
+const GUEST_COOKIE = "guestId";
 
-  if (!session?.user) {
-    return NextResponse.json({ items: [], subtotal: 0 });
+async function getCartForRequest(request, session) {
+  if (session?.user) {
+    return prisma.cart.findUnique({
+      where: { userId: session.user.id },
+      include: {
+        items: {
+          include: {
+            product: { include: { images: { orderBy: { position: "asc" }, take: 1 } } },
+          },
+        },
+      },
+    });
   }
 
-  const cart = await prisma.cart.findUnique({
-    where: { userId: session.user.id },
+  const guestId = request.cookies.get(GUEST_COOKIE)?.value;
+  if (!guestId) return null;
+
+  return prisma.cart.findUnique({
+    where: { guestId },
     include: {
       items: {
         include: {
-          product: {
-            include: { images: { orderBy: { position: "asc" }, take: 1 } },
-          },
+          product: { include: { images: { orderBy: { position: "asc" }, take: 1 } } },
         },
       },
     },
   });
+}
+
+export async function GET(request) {
+  const session = await auth();
+  const cart = await getCartForRequest(request, session);
 
   if (!cart) {
     return NextResponse.json({ items: [], subtotal: 0 });
@@ -44,91 +59,79 @@ export async function GET() {
   return NextResponse.json({ items, subtotal });
 }
 
-// Add a product to the cart (or increase quantity if it already exists)
 export async function POST(request) {
   const session = await auth();
-
-  if (!session?.user) {
-    return NextResponse.json(
-      { error: "Please login to add items to your cart." },
-      { status: 401 }
-    );
-  }
 
   try {
     const body = await request.json();
     const { productId, quantity } = body;
     const qty = Math.max(1, parseInt(quantity) || 1);
 
-    const product = await prisma.product.findUnique({
-      where: { id: productId },
-    });
+    const product = await prisma.product.findUnique({ where: { id: productId } });
 
     if (!product || !product.isActive) {
-      return NextResponse.json(
-        { error: "This product is not available." },
-        { status: 404 }
-      );
+      return NextResponse.json({ error: "This product is not available." }, { status: 404 });
     }
 
     if (product.stock < qty) {
-      return NextResponse.json(
-        { error: "Not enough stock available." },
-        { status: 400 }
-      );
+      return NextResponse.json({ error: "Not enough stock available." }, { status: 400 });
     }
 
-    // Ensure the user has a cart
-    let cart = await prisma.cart.findUnique({
-      where: { userId: session.user.id },
-    });
+    let cart;
+    let newGuestId = null;
 
-    if (!cart) {
-      cart = await prisma.cart.create({
-        data: { userId: session.user.id },
-      });
+    if (session?.user) {
+      cart = await prisma.cart.findUnique({ where: { userId: session.user.id } });
+      if (!cart) {
+        cart = await prisma.cart.create({ data: { userId: session.user.id } });
+      }
+    } else {
+      let guestId = request.cookies.get(GUEST_COOKIE)?.value;
+
+      if (guestId) {
+        cart = await prisma.cart.findUnique({ where: { guestId } });
+      }
+
+      if (!cart) {
+        guestId = guestId || randomUUID();
+        newGuestId = guestId;
+        cart = await prisma.cart.create({ data: { guestId } });
+      }
     }
 
-    // Check if item already exists in cart
     const existingItem = await prisma.cartItem.findUnique({
-      where: {
-        cartId_productId: {
-          cartId: cart.id,
-          productId: productId,
-        },
-      },
+      where: { cartId_productId: { cartId: cart.id, productId } },
     });
 
     if (existingItem) {
       const newQuantity = existingItem.quantity + qty;
-
       if (product.stock < newQuantity) {
-        return NextResponse.json(
-          { error: "Not enough stock available." },
-          { status: 400 }
-        );
+        return NextResponse.json({ error: "Not enough stock available." }, { status: 400 });
       }
-
       await prisma.cartItem.update({
         where: { id: existingItem.id },
         data: { quantity: newQuantity },
       });
     } else {
       await prisma.cartItem.create({
-        data: {
-          cartId: cart.id,
-          productId: productId,
-          quantity: qty,
-        },
+        data: { cartId: cart.id, productId, quantity: qty },
       });
     }
 
-    return NextResponse.json({ message: "Added to cart." }, { status: 201 });
+    const response = NextResponse.json({ message: "Added to cart." }, { status: 201 });
+
+    if (newGuestId) {
+      response.cookies.set(GUEST_COOKIE, newGuestId, {
+        httpOnly: true,
+        maxAge: 60 * 60 * 24 * 365,
+        path: "/",
+        sameSite: "lax",
+      });
+    }
+
+    return response;
   } catch (error) {
     console.error("Cart POST error:", error);
-    return NextResponse.json(
-      { error: "Something went wrong. Please try again." },
-      { status: 500 }
-    );
+    return NextResponse.json({ error: "Something went wrong. Please try again." }, { status: 500 });
   }
 }

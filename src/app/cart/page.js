@@ -1,55 +1,14 @@
 "use client";
 
-import { useEffect, useState } from "react";
 import Link from "next/link";
-import { useSession } from "next-auth/react";
 import { Trash2, Minus, Plus } from "lucide-react";
+import { useCart } from "@/context/CartContext";
 import { calculateShipping, getAmountLeftForFreeShipping } from "@/lib/orderCalculations";
 
 export default function CartPage() {
-  const { data: session, status } = useSession();
-  const [cart, setCart] = useState({ items: [], subtotal: 0 });
-  const [loading, setLoading] = useState(true);
+  const { items, subtotal, loading, updateQuantity, removeItem } = useCart();
 
-  useEffect(() => {
-    if (status === "authenticated") {
-      fetchCart();
-    } else if (status === "unauthenticated") {
-      setLoading(false);
-    }
-  }, [status]);
-
-  async function fetchCart() {
-    setLoading(true);
-    try {
-      const res = await fetch("/api/cart");
-      const data = await res.json();
-      setCart(data);
-    } catch (err) {
-      console.error(err);
-    } finally {
-      setLoading(false);
-    }
-  }
-
-  async function updateQuantity(itemId, newQuantity) {
-    if (newQuantity < 1) return;
-
-    await fetch(`/api/cart/${itemId}`, {
-      method: "PATCH",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ quantity: newQuantity }),
-    });
-
-    fetchCart();
-  }
-
-  async function removeItem(itemId) {
-    await fetch(`/api/cart/${itemId}`, { method: "DELETE" });
-    fetchCart();
-  }
-
-  if (status === "loading" || loading) {
+  if (loading) {
     return (
       <div className="max-w-4xl mx-auto px-4 py-16 text-center text-ink-600 text-sm">
         Loading your cart...
@@ -57,24 +16,7 @@ export default function CartPage() {
     );
   }
 
-  if (status === "unauthenticated") {
-    return (
-      <div className="max-w-4xl mx-auto px-4 py-16 text-center">
-        <h1 className="text-2xl font-display font-semibold mb-3">Your Cart</h1>
-        <p className="text-ink-600 text-sm mb-6">
-          Please login to view your cart.
-        </p>
-        <Link
-          href="/login"
-          className="inline-block bg-ink-900 text-white px-6 py-3 rounded-md text-sm font-medium hover:bg-black"
-        >
-          Login
-        </Link>
-      </div>
-    );
-  }
-
-  if (cart.items.length === 0) {
+  if (items.length === 0) {
     return (
       <div className="max-w-4xl mx-auto px-4 py-16 text-center">
         <h1 className="text-2xl font-display font-semibold mb-3">Your Cart</h1>
@@ -89,13 +31,15 @@ export default function CartPage() {
     );
   }
 
+  const shipping = calculateShipping(subtotal);
+
   return (
     <div className="max-w-5xl mx-auto px-4 py-10">
       <h1 className="text-2xl font-display font-semibold mb-8">Your Cart</h1>
 
       <div className="grid grid-cols-1 md:grid-cols-[1fr_320px] gap-10">
         <div className="space-y-4">
-          {cart.items.map((item) => (
+          {items.map((item) => (
             <div
               key={item.id}
               className="flex gap-4 border border-cream-200 rounded-lg p-4"
@@ -126,7 +70,7 @@ export default function CartPage() {
                     <button
                       type="button"
                       onClick={() => updateQuantity(item.id, item.quantity - 1)}
-                      className="p-1.5 hover:bg-cream-50"
+                      className="p-1.5 hover:bg-cream-50 cursor-pointer"
                     >
                       <Minus className="w-3.5 h-3.5" />
                     </button>
@@ -137,7 +81,7 @@ export default function CartPage() {
                       type="button"
                       onClick={() => updateQuantity(item.id, item.quantity + 1)}
                       disabled={item.quantity >= item.stock}
-                      className="p-1.5 hover:bg-cream-50 disabled:opacity-40"
+                      className="p-1.5 hover:bg-cream-50 disabled:opacity-40 cursor-pointer"
                     >
                       <Plus className="w-3.5 h-3.5" />
                     </button>
@@ -146,7 +90,7 @@ export default function CartPage() {
                   <button
                     type="button"
                     onClick={() => removeItem(item.id)}
-                    className="text-ink-600 hover:text-red-600"
+                    className="text-ink-600 hover:text-red-600 cursor-pointer"
                     title="Remove"
                   >
                     <Trash2 className="w-4 h-4" />
@@ -155,7 +99,7 @@ export default function CartPage() {
               </div>
 
               <div className="text-sm font-semibold text-ink-900">
-                Rs. {item.lineTotal.toLocaleString()}
+                Rs. {(item.price * item.quantity).toLocaleString()}
               </div>
             </div>
           ))}
@@ -166,31 +110,27 @@ export default function CartPage() {
 
           <div className="flex justify-between text-sm mb-2">
             <span className="text-ink-600">Subtotal</span>
-            <span className="font-medium">Rs. {cart.subtotal.toLocaleString()}</span>
+            <span className="font-medium">Rs. {subtotal.toLocaleString()}</span>
           </div>
 
           <div className="flex justify-between text-sm mb-2">
             <span className="text-ink-600">Shipping</span>
-            {calculateShipping(cart.subtotal) === 0 ? (
+            {shipping === 0 ? (
               <span className="font-medium text-green-600">Free</span>
             ) : (
-              <span className="font-medium">
-                Rs. {calculateShipping(cart.subtotal).toLocaleString()}
-              </span>
+              <span className="font-medium">Rs. {shipping.toLocaleString()}</span>
             )}
           </div>
 
-          {calculateShipping(cart.subtotal) > 0 && (
+          {shipping > 0 && (
             <p className="text-xs text-ink-600 bg-cream-100 rounded-md px-3 py-2 mb-4">
-              Add Rs. {getAmountLeftForFreeShipping(cart.subtotal).toLocaleString()} more to get free shipping!
+              Add Rs. {getAmountLeftForFreeShipping(subtotal).toLocaleString()} more to get free shipping!
             </p>
           )}
 
           <div className="flex justify-between text-sm font-semibold border-t border-cream-200 pt-3 mb-4">
             <span>Total</span>
-            <span>
-              Rs. {(cart.subtotal + calculateShipping(cart.subtotal)).toLocaleString()}
-            </span>
+            <span>Rs. {(subtotal + shipping).toLocaleString()}</span>
           </div>
 
           <Link

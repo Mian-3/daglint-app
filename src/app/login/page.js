@@ -26,15 +26,22 @@ export default function LoginPage() {
       redirect: false,
     });
 
-    setLoading(false);
+   setLoading(false);
 
-    if (result?.error) {
-      setError("Invalid email or password.");
-      return;
-    }
+if (result?.error) {
+  setError("Invalid email or password.");
+  return;
+}
 
-    router.push("/");
-    router.refresh();
+// Merge any guest cart items into the account
+try {
+  await fetch("/api/cart/merge", { method: "POST" });
+} catch (err) {
+  console.error("Cart merge failed:", err);
+}
+
+router.push("/");
+router.refresh();
   }
 
   return (

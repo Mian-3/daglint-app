@@ -4,14 +4,14 @@ import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { useSession } from "next-auth/react";
 import Link from "next/link";
+import { useCart } from "@/context/CartContext";
 import { calculateShipping, getAmountLeftForFreeShipping } from "@/lib/orderCalculations";
 
 export default function CheckoutPage() {
   const router = useRouter();
   const { data: session, status } = useSession();
+  const { items, subtotal, loading, refreshCart } = useCart();
 
-  const [cart, setCart] = useState({ items: [], subtotal: 0 });
-  const [loadingCart, setLoadingCart] = useState(true);
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState("");
 
@@ -34,23 +34,6 @@ export default function CheckoutPage() {
       }));
     }
   }, [status, session]);
-
-  useEffect(() => {
-    fetchCart();
-  }, [status]);
-
-  async function fetchCart() {
-    setLoadingCart(true);
-    try {
-      const res = await fetch("/api/cart");
-      const data = await res.json();
-      setCart(data);
-    } catch (err) {
-      console.error(err);
-    } finally {
-      setLoadingCart(false);
-    }
-  }
 
   function handleChange(e) {
     setForm({ ...form, [e.target.name]: e.target.value });
@@ -82,6 +65,7 @@ export default function CheckoutPage() {
         return;
       }
 
+      await refreshCart();
       router.push(`/order-confirmation/${data.orderNumber}`);
     } catch (err) {
       setError("Something went wrong. Please try again.");
@@ -89,10 +73,10 @@ export default function CheckoutPage() {
     }
   }
 
-  const shipping = calculateShipping(cart.subtotal);
-  const total = cart.subtotal + shipping;
+  const shipping = calculateShipping(subtotal);
+  const total = subtotal + shipping;
 
-  if (loadingCart || status === "loading") {
+  if (loading || status === "loading") {
     return (
       <div className="max-w-4xl mx-auto px-4 py-16 text-center text-ink-600 text-sm">
         Loading checkout...
@@ -100,7 +84,7 @@ export default function CheckoutPage() {
     );
   }
 
-  if (cart.items.length === 0) {
+  if (items.length === 0) {
     return (
       <div className="max-w-4xl mx-auto px-4 py-16 text-center">
         <h1 className="text-2xl font-display font-semibold mb-3">Checkout</h1>
@@ -236,7 +220,7 @@ export default function CheckoutPage() {
           <button
             type="submit"
             disabled={submitting}
-            className="w-full bg-ink-900 text-white py-3 rounded-md text-sm font-medium hover:bg-black disabled:opacity-50"
+            className="w-full bg-ink-900 text-white py-3 rounded-md text-sm font-medium hover:bg-black disabled:opacity-50 cursor-pointer"
           >
             {submitting ? "Placing Order..." : "Place Order"}
           </button>
@@ -246,13 +230,13 @@ export default function CheckoutPage() {
           <h2 className="font-semibold mb-4">Order Summary</h2>
 
           <div className="space-y-3 mb-4 max-h-64 overflow-y-auto">
-            {cart.items.map((item) => (
+            {items.map((item) => (
               <div key={item.id} className="flex justify-between text-sm">
                 <span className="text-ink-600">
                   {item.name} × {item.quantity}
                 </span>
                 <span className="font-medium">
-                  Rs. {item.lineTotal.toLocaleString()}
+                  Rs. {(item.price * item.quantity).toLocaleString()}
                 </span>
               </div>
             ))}
@@ -260,7 +244,7 @@ export default function CheckoutPage() {
 
           <div className="flex justify-between text-sm mb-2 border-t border-cream-200 pt-3">
             <span className="text-ink-600">Subtotal</span>
-            <span className="font-medium">Rs. {cart.subtotal.toLocaleString()}</span>
+            <span className="font-medium">Rs. {subtotal.toLocaleString()}</span>
           </div>
 
           <div className="flex justify-between text-sm mb-2">
@@ -274,7 +258,7 @@ export default function CheckoutPage() {
 
           {shipping > 0 && (
             <p className="text-xs text-ink-600 bg-cream-100 rounded-md px-3 py-2 mb-2">
-              Add Rs. {getAmountLeftForFreeShipping(cart.subtotal).toLocaleString()} more to get free shipping!
+              Add Rs. {getAmountLeftForFreeShipping(subtotal).toLocaleString()} more to get free shipping!
             </p>
           )}
 

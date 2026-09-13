@@ -71,7 +71,7 @@ export default function CartDrawer() {
                       <button
                         type="button"
                         onClick={() => updateQuantity(item.id, item.quantity - 1)}
-                        className="border border-cream-200 rounded p-1"
+                        className="border border-cream-200 rounded p-1 cursor-pointer"
                       >
                         <Minus className="w-3 h-3" />
                       </button>
@@ -80,14 +80,14 @@ export default function CartDrawer() {
                         type="button"
                         onClick={() => updateQuantity(item.id, item.quantity + 1)}
                         disabled={item.quantity >= item.stock}
-                        className="border border-cream-200 rounded p-1 disabled:opacity-40"
+                        className="border border-cream-200 rounded p-1 disabled:opacity-40 cursor-pointer"
                       >
                         <Plus className="w-3 h-3" />
                       </button>
                       <button
                         type="button"
                         onClick={() => removeItem(item.id)}
-                        className="ml-2 text-ink-600 hover:text-red-600"
+                        className="ml-2 text-ink-600 hover:text-red-600 cursor-pointer"
                       >
                         <Trash2 className="w-3.5 h-3.5" />
                       </button>

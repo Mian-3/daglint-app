@@ -1,17 +1,33 @@
 "use client";
 
+import { useState, useEffect } from "react";
 import Link from "next/link";
 import Logo from "./Logo";
-import { ShoppingCart, Search, User, LogOut } from "lucide-react";
+import { ShoppingCart, User, LogOut } from "lucide-react";
 import { useSession, signOut } from "next-auth/react";
 import { useCart } from "@/context/CartContext";
 
 export default function Navbar() {
   const { data: session, status } = useSession();
   const { itemCount, openDrawer } = useCart();
+  const [isScrolled, setIsScrolled] = useState(false);
+
+  useEffect(() => {
+    function handleScroll() {
+      setIsScrolled(window.scrollY > 10);
+    }
+    window.addEventListener("scroll", handleScroll);
+    return () => window.removeEventListener("scroll", handleScroll);
+  }, []);
 
   return (
-    <header className="w-full border-b border-cream-200 bg-white sticky top-0 z-50">
+    <header
+      className={`w-full bg-white sticky top-0 z-50 transition-shadow duration-300 border-b ${
+        isScrolled
+          ? "shadow-md border-transparent"
+          : "shadow-none border-cream-200"
+      }`}
+    >
       <div className="max-w-7xl mx-auto flex items-center justify-between px-4 py-4">
         <Logo />
 
@@ -34,22 +50,19 @@ export default function Navbar() {
         </nav>
 
         <div className="flex items-center gap-4 text-ink-900">
-          <Search className="w-5 h-5 cursor-pointer hover:text-black transition-colors" />
-
           {status === "authenticated" ? (
             <div className="flex items-center gap-3">
               <Link
                 href="/account/orders"
-                className="flex items-center gap-1 text-sm hover:text-black transition-colors"
                 title="My Orders"
+                className="hover:text-black transition-colors cursor-pointer"
               >
                 <User className="w-5 h-5" />
-                <span className="hidden md:inline">{session.user.name}</span>
               </Link>
               <button
                 onClick={() => signOut({ callbackUrl: "/" })}
                 title="Logout"
-                className="cursor-pointer hover:text-black transition-colors"
+                className="hover:text-black transition-colors cursor-pointer"
               >
                 <LogOut className="w-5 h-5" />
               </button>
@@ -57,21 +70,22 @@ export default function Navbar() {
           ) : (
             <Link
               href="/login"
-              className="flex items-center gap-1 hover:text-black transition-colors"
+              title="Login"
+              className="hover:text-black transition-colors cursor-pointer"
             >
               <User className="w-5 h-5" />
-              <span className="hidden md:inline text-sm">Login</span>
             </Link>
           )}
 
           <button
             type="button"
             onClick={openDrawer}
-            className="relative hover:text-black transition-colors"
+            title="Cart"
+            className="relative hover:text-black transition-colors cursor-pointer"
           >
             <ShoppingCart className="w-5 h-5" />
             {itemCount > 0 && (
-              <span className="absolute -top-2 -right-2 bg-red-600 text-white text-[10px] font-semibold w-4.5 h-4.5 min-w-[18px] min-h-[18px] rounded-full flex items-center justify-center px-1">
+              <span className="absolute -top-2 -right-2 bg-red-600 text-white text-[10px] font-semibold min-w-[18px] h-[18px] rounded-full flex items-center justify-center px-1">
                 {itemCount}
               </span>
             )}
