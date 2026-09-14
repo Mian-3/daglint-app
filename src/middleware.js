@@ -21,19 +21,16 @@
 // export const config = {
 //   matcher: ["/admin/:path*"],
 // };
-
 import { NextResponse } from "next/server";
 import { getToken } from "next-auth/jwt";
-import type { NextRequest } from "next/server";
 
-export async function middleware(req: NextRequest) {
+export async function middleware(req) {
   const isAdminRoute = req.nextUrl.pathname.startsWith("/admin");
 
   if (!isAdminRoute) {
     return NextResponse.next();
   }
 
-  // Get the session token securely from cookies
   const token = await getToken({ 
     req, 
     secret: process.env.AUTH_SECRET 
