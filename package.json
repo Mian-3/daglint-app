@@ -4,9 +4,10 @@
   "private": true,
   "scripts": {
     "dev": "next dev",
-    "build": "next build",
+    "build": "prisma generate && next build",
     "start": "next start",
     "lint": "eslint"
+
   },
   "dependencies": {
     "@prisma/client": "^6.19.3",
@@ -24,9 +25,17 @@
     "prisma": "^6.19.3",
     "tailwindcss": "^4"
   },
+  "scripts": {
+  "dev": "next dev",
+  "build": "prisma generate && next build",
+  "start": "next start",
+  "lint": "next lint"
+},
 
   "prisma": {
   "seed": "node prisma/seed.js"
 }
 }
+
+  
 
