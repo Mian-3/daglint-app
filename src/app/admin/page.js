@@ -1,5 +1,7 @@
 import { prisma } from "@/lib/prisma";
 import Link from "next/link";
+import DateRangeFilter from "@/components/admin/DateRangeFilter";
+import { getDateRange, RANGE_LABELS } from "@/lib/dateRanges";
 import {
   DollarSign,
   ShoppingBag,
@@ -11,9 +13,13 @@ import {
 
 export const dynamic = "force-dynamic";
 
-async function getStats() {
+async function getStats(range, from, to) {
+  const { start, end } = getDateRange(range, from, to);
+
+  const dateFilter = { createdAt: { gte: start, lte: end } };
+
   const [
-    totalOrders,
+    ordersInRange,
     totalCustomers,
     totalProducts,
     pendingOrders,
@@ -21,7 +27,7 @@ async function getStats() {
     recentOrders,
     revenueResult,
   ] = await Promise.all([
-    prisma.order.count(),
+    prisma.order.count({ where: dateFilter }),
     prisma.user.count({ where: { role: "USER" } }),
     prisma.product.count({ where: { isActive: true } }),
     prisma.order.count({ where: { status: "PENDING" } }),
@@ -37,15 +43,15 @@ async function getStats() {
     }),
     prisma.order.aggregate({
       _sum: { totalAmount: true },
-      where: { status: { not: "CANCELLED" } },
+      where: { ...dateFilter, status: { not: "CANCELLED" } },
     }),
   ]);
 
   const totalRevenue = Number(revenueResult._sum.totalAmount || 0);
-  const avgOrderValue = totalOrders > 0 ? totalRevenue / totalOrders : 0;
+  const avgOrderValue = ordersInRange > 0 ? totalRevenue / ordersInRange : 0;
 
   return {
-    totalOrders,
+    ordersInRange,
     totalCustomers,
     totalProducts,
     pendingOrders,
@@ -68,18 +74,23 @@ const STATUS_COLORS = {
   CANCELLED: "bg-red-100 text-red-800",
 };
 
-export default async function AdminDashboardPage() {
-  const stats = await getStats();
+export default async function AdminDashboardPage({ searchParams }) {
+  const params = await searchParams;
+  const range = params.range || "month";
+  const from = params.from || "";
+  const to = params.to || "";
+
+  const stats = await getStats(range, from, to);
 
   const cards = [
     {
-      label: "Total Revenue",
-      value: `Rs. ${stats.totalRevenue.toLocaleString()}`,
+      label: `Revenue (${RANGE_LABELS[range] || "This Month"})`,
+      value: `Rs. ${stats.totalRevenue.toLocaleString()} PKR`,
       icon: DollarSign,
     },
     {
-      label: "Total Orders",
-      value: stats.totalOrders,
+      label: `Orders (${RANGE_LABELS[range] || "This Month"})`,
+      value: stats.ordersInRange,
       icon: ShoppingBag,
     },
     {
@@ -99,7 +110,7 @@ export default async function AdminDashboardPage() {
     },
     {
       label: "Avg. Order Value",
-      value: `Rs. ${Math.round(stats.avgOrderValue).toLocaleString()}`,
+      value: `Rs. ${Math.round(stats.avgOrderValue).toLocaleString()} PKR`,
       icon: DollarSign,
     },
   ];
@@ -109,9 +120,11 @@ export default async function AdminDashboardPage() {
       <h1 className="text-2xl font-display font-semibold text-ink-900 mb-1">
         Dashboard
       </h1>
-      <p className="text-sm text-ink-600 mb-8">
+      <p className="text-sm text-ink-600 mb-6">
         An overview of your store&apos;s performance.
       </p>
+
+      <DateRangeFilter />
 
       <div className="grid grid-cols-2 md:grid-cols-3 gap-4 mb-10">
         {cards.map((card) => {

@@ -160,16 +160,18 @@ export default async function ProductDetailsPage({ params }) {
         title: "Description",
         content: product.description,
       },
-      {
-        title: "Shipping Information",
-        content:
-          "Orders are processed within 1-2 business days. Free shipping on orders over Rs. 1500, otherwise a flat Rs. 250 shipping fee applies. Delivery typically takes 3-5 business days depending on your location.",
-      },
-      {
-        title: "Return Policy",
-        content:
-          "If you're not satisfied with your purchase, you can request a return within 7 days of delivery. The item must be unused and in its original packaging.",
-      },
+     {
+  title: "Shipping Information",
+  content:
+    product.shippingInfo ||
+    "Orders are processed within 1-2 business days. Free shipping on orders over Rs. 1500, otherwise a flat Rs. 250 shipping fee applies. Delivery typically takes 3-5 business days depending on your location.",
+},
+{
+  title: "Return Policy",
+  content:
+    product.returnPolicy ||
+    "If you're not satisfied with your purchase, you can request a return within 7 days of delivery. The item must be unused and in its original packaging.",
+},
     ]}
   />
 </div>

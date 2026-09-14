@@ -84,6 +84,8 @@ model Product {
   slug             String         @unique
   description      String
   shortDescription String?
+  shippingInfo     String?
+  returnPolicy     String?
   price            Decimal        @db.Decimal(10, 2)
   compareAtPrice   Decimal?       @db.Decimal(10, 2)
   sku              String         @unique
