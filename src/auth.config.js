@@ -4,6 +4,13 @@ export const authConfig = {
   },
   providers: [],
   callbacks: {
+    async session({ session, token }) {
+      if (session.user) {
+        session.user.id = token.id;
+        session.user.role = token.role;
+      }
+      return session;
+    },
     authorized({ auth, request }) {
       const isAdminRoute = request.nextUrl.pathname.startsWith("/admin");
       const isLoggedIn = !!auth?.user;
