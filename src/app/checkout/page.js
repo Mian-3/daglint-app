@@ -15,6 +15,11 @@ export default function CheckoutPage() {
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState("");
 
+  const [couponCode, setCouponCode] = useState("");
+  const [appliedCoupon, setAppliedCoupon] = useState(null);
+  const [couponError, setCouponError] = useState("");
+  const [applyingCoupon, setApplyingCoupon] = useState(false);
+
   const [form, setForm] = useState({
     fullName: "",
     email: "",
@@ -39,6 +44,39 @@ export default function CheckoutPage() {
     setForm({ ...form, [e.target.name]: e.target.value });
   }
 
+  async function handleApplyCoupon() {
+    setCouponError("");
+    setApplyingCoupon(true);
+
+    try {
+      const res = await fetch("/api/coupons/validate", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ code: couponCode, subtotal }),
+      });
+
+      const data = await res.json();
+
+      if (!res.ok) {
+        setCouponError(data.error || "Invalid coupon.");
+        setAppliedCoupon(null);
+        return;
+      }
+
+      setAppliedCoupon(data);
+    } catch (err) {
+      setCouponError("Something went wrong.");
+    } finally {
+      setApplyingCoupon(false);
+    }
+  }
+
+  function removeCoupon() {
+    setAppliedCoupon(null);
+    setCouponCode("");
+    setCouponError("");
+  }
+
   async function handleSubmit(e) {
     e.preventDefault();
     setError("");
@@ -54,7 +92,10 @@ export default function CheckoutPage() {
       const res = await fetch("/api/orders", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(form),
+        body: JSON.stringify({
+          ...form,
+          couponCode: appliedCoupon?.code || "",
+        }),
       });
 
       const data = await res.json();
@@ -73,8 +114,9 @@ export default function CheckoutPage() {
     }
   }
 
-  const shipping = calculateShipping(subtotal);
-  const total = subtotal + shipping;
+  const discount = appliedCoupon?.discount || 0;
+  const shipping = calculateShipping(subtotal - discount);
+  const total = subtotal - discount + shipping;
 
   if (loading || status === "loading") {
     return (
@@ -260,6 +302,52 @@ export default function CheckoutPage() {
             <p className="text-xs text-ink-600 bg-cream-100 rounded-md px-3 py-2 mb-2">
               Add Rs. {getAmountLeftForFreeShipping(subtotal).toLocaleString()} more to get free shipping!
             </p>
+          )}
+
+          {/* Coupon */}
+          <div className="border-t border-cream-200 pt-3 mt-3 mb-3">
+            {appliedCoupon ? (
+              <div className="flex items-center justify-between bg-green-50 border border-green-200 rounded-md px-3 py-2">
+                <span className="text-xs text-green-800 font-medium">
+                  {appliedCoupon.code} applied
+                </span>
+                <button
+                  type="button"
+                  onClick={removeCoupon}
+                  className="text-xs text-green-800 underline cursor-pointer"
+                >
+                  Remove
+                </button>
+              </div>
+            ) : (
+              <div className="flex items-center gap-2">
+                <input
+                  type="text"
+                  value={couponCode}
+                  onChange={(e) => setCouponCode(e.target.value)}
+                  placeholder="Coupon code"
+                  className="flex-1 border border-cream-200 rounded-md px-3 py-2 text-sm"
+                />
+                <button
+                  type="button"
+                  onClick={handleApplyCoupon}
+                  disabled={applyingCoupon || !couponCode.trim()}
+                  className="bg-ink-900 text-white px-4 py-2 rounded-md text-sm font-medium hover:bg-black disabled:opacity-50 cursor-pointer"
+                >
+                  {applyingCoupon ? "..." : "Apply"}
+                </button>
+              </div>
+            )}
+            {couponError && (
+              <p className="text-xs text-red-600 mt-1.5">{couponError}</p>
+            )}
+          </div>
+
+          {discount > 0 && (
+            <div className="flex justify-between text-sm mb-2">
+              <span className="text-ink-600">Discount</span>
+              <span className="font-medium text-green-600">- Rs. {discount.toLocaleString()}</span>
+            </div>
           )}
 
           <div className="flex justify-between text-sm font-semibold border-t border-cream-200 pt-3">
