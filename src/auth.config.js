@@ -16,6 +16,11 @@ export const authConfig = {
       const isLoggedIn = !!auth?.user;
       const userRole = auth?.user?.role;
 
+      // API routes handle their own authentication — never redirect them
+      if (path.startsWith("/api")) {
+        return true;
+      }
+
       // Admin section always requires an ADMIN role
       if (path.startsWith("/admin")) {
         if (!isLoggedIn) {
