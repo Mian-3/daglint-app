@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { Mail, Check } from "lucide-react";
+import { Check } from "lucide-react";
 
 export default function NewsletterForm({ variant = "light" }) {
   const [email, setEmail] = useState("");
@@ -41,53 +41,34 @@ export default function NewsletterForm({ variant = "light" }) {
 
   if (status === "success") {
     return (
-      <div
-        className={`flex items-center gap-2 text-xs md:text-sm ${
-          isDark ? "text-white" : "text-ink-900"
-        }`}
-      >
-        <Check className="w-4 h-4 text-green-500" />
+      <div className="flex items-center gap-2 text-sm text-ink-900 bg-green-50 border border-green-200 rounded-full px-5 py-3">
+        <Check className="w-4 h-4 text-green-600 shrink-0" />
         {message}
       </div>
     );
   }
 
   return (
-    <form onSubmit={handleSubmit} className="w-full max-w-xs">
-      <div
-        className={`flex items-center gap-2 border rounded-full px-4 py-2.5 ${
-          isDark
-            ? "border-white/30 bg-white/10 backdrop-blur-sm"
-            : "border-ink-900/20 bg-white"
-        }`}
-      >
-        <Mail className={`w-4 h-4 shrink-0 ${isDark ? "text-white/70" : "text-ink-600"}`} />
+    <form onSubmit={handleSubmit} className="w-full max-w-sm">
+      <div className="flex items-center gap-2 bg-white border border-cream-200 rounded-full p-1.5 shadow-sm focus-within:border-ink-900 transition-colors">
         <input
           type="email"
           value={email}
           onChange={(e) => setEmail(e.target.value)}
-          placeholder="Your email address"
+          placeholder="Enter your email"
           required
-          className={`flex-1 bg-transparent text-xs md:text-sm focus:outline-none ${
-            isDark ? "text-white placeholder:text-white/50" : "text-ink-900 placeholder:text-ink-400"
-          }`}
+          className="flex-1 bg-transparent text-sm px-4 py-2 text-ink-900 placeholder:text-ink-400 focus:outline-none min-w-0"
         />
         <button
           type="submit"
           disabled={status === "loading"}
-          className={`text-xs font-medium whitespace-nowrap px-3 py-1 rounded-full cursor-pointer transition-colors disabled:opacity-50 ${
-            isDark
-              ? "bg-white text-ink-900 hover:bg-cream-100"
-              : "bg-ink-900 text-white hover:bg-black"
-          }`}
+          className="shrink-0 bg-ink-900 text-white text-sm font-medium px-5 py-2.5 rounded-full cursor-pointer hover:bg-black transition-colors disabled:opacity-50"
         >
-          {status === "loading" ? "..." : "Notify Me"}
+          {status === "loading" ? "..." : "Subscribe"}
         </button>
       </div>
       {status === "error" && (
-        <p className={`text-[11px] mt-2 ${isDark ? "text-white/80" : "text-red-600"}`}>
-          {message}
-        </p>
+        <p className="text-xs text-red-600 mt-2.5">{message}</p>
       )}
     </form>
   );

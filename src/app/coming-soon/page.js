@@ -2,39 +2,27 @@ import NewsletterForm from "@/components/NewsletterForm";
 
 export default function ComingSoonPage() {
   return (
-    <div className="fixed inset-0 z-[100]">
-      {/* Desktop / Tablet: full banner image as background */}
-      <div className="hidden md:block absolute inset-0">
-        <img
-          src="/coming-soon.png"
-          alt="Daglint - Coming Soon"
-          className="absolute inset-0 w-full h-full object-cover object-center"
-        />
-        <div className="absolute inset-x-0 bottom-16 flex justify-center">
-          <NewsletterForm variant="dark" />
-        </div>
-      </div>
+    <div className="fixed inset-0 z-[100] bg-cream-50 flex flex-col items-center justify-center px-6 text-center">
+      <p className="font-display italic font-semibold text-3xl md:text-4xl text-ink-900 mb-10">
+        Daglint
+      </p>
 
-      {/* Mobile: custom-built version */}
-      <div className="md:hidden absolute inset-0 bg-[#f2ede4] flex flex-col items-center justify-center px-6 text-center">
-        <p className="font-display italic font-semibold text-4xl text-ink-900 mb-8">
-          DaGlint
-        </p>
+      <p className="text-[11px] md:text-xs uppercase tracking-[0.4em] text-ink-600 mb-5">
+        Launching Soon
+      </p>
 
-        <p className="text-xs uppercase tracking-[0.4em] text-ink-900 mb-4">
-          Coming Soon
-        </p>
+      <h1 className="text-4xl md:text-6xl font-display italic font-medium text-ink-900 mb-6">
+        Coming Soon
+      </h1>
 
-        <span className="w-10 h-px bg-ink-900/40 mb-4" />
+      <span className="w-12 h-px bg-ink-900/20 mb-6" />
 
-        <p className="text-[11px] uppercase tracking-[0.2em] text-ink-600 leading-relaxed mb-10">
-          Something Extraordinary
-          <br />
-          Is On Its Way
-        </p>
+      <p className="text-sm md:text-base text-ink-600 max-w-md mb-12 leading-relaxed">
+        We&apos;re curating something extraordinary. Leave your email below and
+        we&apos;ll let you know the moment we launch.
+      </p>
 
-        <NewsletterForm variant="light" />
-      </div>
+      <NewsletterForm variant="light" />
     </div>
   );
 }
