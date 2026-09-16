@@ -59,6 +59,19 @@
 
 
 
+// import NextAuth from "next-auth";
+// import { authConfig } from "./auth.config";
+
+// export const { auth: middleware } = NextAuth(authConfig);
+
+// export default middleware;
+
+// export const config = {
+//   matcher: ["/admin/:path*"],
+// };
+
+
+
 import NextAuth from "next-auth";
 import { authConfig } from "./auth.config";
 
@@ -67,5 +80,7 @@ export const { auth: middleware } = NextAuth(authConfig);
 export default middleware;
 
 export const config = {
-  matcher: ["/admin/:path*"],
+  matcher: [
+    "/((?!api/auth|_next/static|_next/image|favicon.ico|uploads|coming-soon).*)",
+  ],
 };
